@@ -44,7 +44,7 @@ class WikiXMLDumpFile(object):
     # Returns a file line iterator with the file position of the begin/end of line
     #  Ex: (line, file_pos_begin_line, file_pos_end_line)
     def __XML_read_lines_and_positions__(self):
-        fin = Utils.get_file_handler(self.filename, 'r')
+        fin = Utils.get_file_handler(self.filename, 'rb')
         pos = fin.tell()
         for line in fin:
             yield (line, pos, pos+len(line))
@@ -60,27 +60,27 @@ class WikiXMLDumpFile(object):
             # ignore leading and trailing whitespaces
             line = line.strip()
             # Process the several fields
-            if (line.startswith('<page>')):
+            if (line.startswith(b'<page>')):
                 revisionTag = False
-            elif (line.startswith('<title>') and line.endswith('</title>')):
-                title = line[7:-8].replace('&amp;', '&')
-            elif (line.startswith('<revision>')):
+            elif (line.startswith(b'<title>') and line.endswith(b'</title>')):
+                title = line[7:-8].replace(b'&amp;', b'&')
+            elif (line.startswith(b'<revision>')):
                 revisionTag = True
-            elif (line.startswith('<id>') and line.endswith('</id>') and revisionTag is False):
+            elif (line.startswith(b'<id>') and line.endswith(b'</id>') and revisionTag is False):
                 id = int(line[4:-5])
-            elif (line.startswith('</page>')):
-                yield (title, id, currText.decode(self.default_encoding))
-            elif (line.startswith('<text')):
+            elif (line.startswith(b'</page>')):
+                yield (title.decode(self.default_encoding), id, currText.decode(self.default_encoding))
+            elif (line.startswith(b'<text')):
                 # Clean and start appending the text
-                currText = ""
+                currText = b""
                 fillText = True
-            elif (line.endswith('</text>') or (line.startswith('<text') and line.endswith('/>'))):
+            elif (line.endswith(b'</text>') or (line.startswith(b'<text') and line.endswith(b'/>'))):
                 # Still add final line and stop appending the text
                 currText += line
                 fillText = False
             # Whether to add to current page text
             if (fillText is True):
-                currText += line + "\n"
+                currText += line + b"\n"
     
     #================================================#
     #            XML DUMP FILE HANDLING              #

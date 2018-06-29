@@ -31,6 +31,8 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # =============================================================================
 
+from __future__ import print_function
+
 """Wikipedia Extractor:
 Extracts and cleans text from Wikipedia database dump and stores output in a
 number of files of similar size in a given directory.
@@ -61,7 +63,7 @@ import urllib
 import re
 import bz2
 import os.path
-from htmlentitydefs import name2codepoint
+from six.moves.html_entities import name2codepoint
 
 ### PARAMS ####################################################################
 
@@ -125,10 +127,10 @@ def WikiDocument(out, id, title, text):
     text = clean(text)
     footer = "\n</doc>"
     out.reserve(len(header) + len(text) + len(footer))
-    print >> out, header
+    print(header, file=out)
     for line in compact(text):
-        print >> out, line.encode('utf-8')
-    print >> out, footer
+        print(line.encode('utf-8'), file=out)
+    print(footer, file=out)
 
 def get_url(id, prefix):
     return "%s?curid=%s" % (prefix, id)
@@ -464,7 +466,7 @@ def compact(text):
                 title += '.'
             headers[lev] = title
             # drop previous headers
-            for i in headers.keys():
+            for i in list(headers.keys()):
                 if i > lev:
                     del headers[i]
             emptySection = True
@@ -489,7 +491,7 @@ def compact(text):
         elif (line[0] == '(' and line[-1] == ')') or line.strip('.-') == '':
             continue
         elif len(headers):
-            items = headers.items()
+            items = list(headers.items())
             items.sort()
             for (i, v) in items:
                 page.append(v)
@@ -594,7 +596,7 @@ def process_data(input, output):
             colon = title.find(':')
             if (colon < 0 or title[:colon] in acceptedNamespaces) and \
                     not redirect:
-                print id, title.encode('utf-8')
+                print(id, title.encode('utf-8'))
                 sys.stdout.flush()
                 WikiDocument(output, id, title, ''.join(page))
             id = None
@@ -608,10 +610,10 @@ def process_data(input, output):
 ### CL INTERFACE ############################################################
 
 def show_help():
-    print >> sys.stdout, __doc__,
+    print(__doc__, file=sys.stdout)
 
 def show_usage(script_name):
-    print >> sys.stderr, 'Usage: %s [options]' % script_name
+    print('Usage: %s [options]' % script_name, file=sys.stderr)
 
 ##
 # Minimum size of output files
@@ -654,15 +656,14 @@ def main():
                     file_size = int(arg)
                 if file_size < minFileSize: raise ValueError()
             except ValueError:
-                print >> sys.stderr, \
-                '%s: %s: Insufficient or invalid size' % (script_name, arg)
+                print('%s: %s: Insufficient or invalid size' % (script_name, arg), file=sys.stderr)
                 sys.exit(2)
         elif opt in ('-n', '--ns'):
                 acceptedNamespaces = set(arg.split(','))
         elif opt in ('-o', '--output'):
                 output_dir = arg
         elif opt in ('-v', '--version'):
-                print 'WikiExtractor.py version:', version
+                print('WikiExtractor.py version:', version)
                 sys.exit(0)
 
     if len(args) > 0:
@@ -673,7 +674,7 @@ def main():
         try:
             os.makedirs(output_dir)
         except:
-            print >> sys.stderr, 'Could not create: ', output_dir
+            print('Could not create: ', output_dir, file=sys.stderr)
             return
 
     if not keepLinks:
